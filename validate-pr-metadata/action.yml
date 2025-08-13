@@ -1,0 +1,20 @@
+name: "Validate PR Metadata"
+description: "Validates CodeYourFuture trainee pull request metadata"
+inputs:
+  GITHUB_TOKEN:
+    description: GitHub Token to use, probably secrets.GITHUB_TOKEN
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+    - name: Download Validator
+      run: gh release -R CodeYourFuture/trainee-tracker view --json assets -q '.assets[] | select(.name | startswith("pr-metadata-validator-musl-")).url' | xargs curl --fail -L -o /tmp/pr-metadata-validator && chmod 0755 /tmp/pr-metadata-validator
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+    - name: Validate PR Metadata
+      run: /tmp/pr-metadata-validator ${{ github.event.pull_request.html_url }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
