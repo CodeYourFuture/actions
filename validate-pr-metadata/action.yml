@@ -4,6 +4,12 @@ inputs:
   GITHUB_TOKEN:
     description: GitHub Token to use, probably secrets.GITHUB_TOKEN
     required: true
+  give_more_specific_comment_for_earlier_learners:
+    description: |
+      Give more specific/directed comments, rather than more vague direction.
+      This should be used in the first 1-2 modules people do, to get them used to bot messages.
+      Avoid this once people are used to getting bot comments, because learning how to infer non-explicit instructions is a useful skill.
+    default: false
   use_dummy_code_of_conduct_validator:
     description: |
       Use the dummy code of conduct validator instead of the real PR metadata validator.
@@ -25,7 +31,14 @@ runs:
         USE_DUMMY_CODE_OF_CONDUCT_VALIDATOR: ${{ inputs.use_dummy_code_of_conduct_validator }}
         GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
     - name: Validate PR Metadata
-      run: /tmp/pr-metadata-validator ${{ github.event.pull_request.html_url }}
+      run: |
+        args=("/tmp/pr-metadata-validator")
+        if [[ "${GIVE_MORE_SPECIFIC_COMMENT_FOR_EARLIER_LEARNERS}" == "true" ]]; then
+          args+=("--give-more-specific-comment-for-earlier-learners")
+        fi
+        args+=("${{ github.event.pull_request.html_url }}")
+        exec "${args[@]}"
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        GIVE_MORE_SPECIFIC_COMMENT_FOR_EARLIER_LEARNERS: ${{ inputs.give_more_specific_comment_for_earlier_learners }}
